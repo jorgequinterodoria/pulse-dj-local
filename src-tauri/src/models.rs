@@ -9,6 +9,7 @@ pub struct Track {
     pub key: String,
     pub energy: u8,
     pub rating: Option<u8>,
+    pub location: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

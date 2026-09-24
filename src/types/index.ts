@@ -1,11 +1,12 @@
 export interface Track {
-    id: string;
-    title: string;
-    artist: string;
-    bpm: number;
-    key: string;
-    energy: number;
-    rating?: number;
+  id: string;
+  title: string;
+  artist: string;
+  bpm: number;
+  key: string;
+  energy: number;
+  rating: number;
+  location?: string; // NUEVO: Ruta física del archivo
 }
 
 export type DjMode = "MyStyle" | "PulseDJ";

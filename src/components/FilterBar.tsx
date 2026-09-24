@@ -1,6 +1,17 @@
 import React, { useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { GripVertical, Music, ChevronDown, SlidersHorizontal, Check } from "lucide-react";
+import { 
+  GripVertical, 
+  Music, 
+  ChevronUp, 
+  Zap, 
+  Shuffle, 
+  Archive, 
+  EyeOff, 
+  Sparkles,
+  Activity,
+  Equal
+} from "lucide-react";
 
 interface FilterBarProps {
   filterArmonico: boolean;
@@ -14,10 +25,8 @@ interface FilterBarProps {
 export const FilterBar: React.FC<FilterBarProps> = ({
   filterArmonico,
   bpmTolerance,
-  allowHalfDouble,
   onToggleFilter,
   onSetBpmTolerance,
-  onToggleHalfDouble,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -25,6 +34,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     try {
       getCurrentWindow().startDragging();
     } catch {}
+  };
+
+  // Cicla los rangos de BPM al hacer clic
+  const handleBpmCycle = () => {
+    if (bpmTolerance === 3) onSetBpmTolerance(6);
+    else if (bpmTolerance === 6) onSetBpmTolerance(10);
+    else onSetBpmTolerance(3);
   };
 
   return (
@@ -40,78 +56,79 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           <span>Draggable</span>
         </div>
 
-        <div className="flex items-center space-x-2">
-          {/* Botón principal de coincidencia armónica */}
-          <button
-            type="button"
-            data-testid="toggle-filter-btn"
-            onClick={onToggleFilter}
-            className={`flex items-center space-x-1 px-2 py-0.5 rounded transition-colors ${
-              filterArmonico ? "text-[#00e676]" : "text-[#7f948c] hover:text-white"
-            }`}
-          >
-            <Music size={12} />
-            <span>Coincidencia armónica</span>
-          </button>
-
-          {/* Menú de configuración de rangos */}
-          <button
-            type="button"
-            data-testid="filter-dropdown-trigger"
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="p-1 hover:text-white transition-colors"
-            title="Configuración de tolerancia armónica y BPM"
-          >
-            <ChevronDown size={12} className={menuOpen ? "rotate-180 transition-transform" : "transition-transform"} />
-          </button>
-        </div>
+        {/* Botón activo estilo pastilla azul */}
+        <button
+          type="button"
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#3b82f6] text-white hover:bg-[#2563eb] transition-colors shadow-sm"
+        >
+          <Music size={12} />
+          <span>Coincidencia armónica</span>
+          <ChevronUp size={14} className={menuOpen ? "" : "rotate-180 transition-transform"} />
+        </button>
       </div>
 
-      {/* Menú desplegable flotante de filtros */}
+      {/* Menú ALL FILTERS expandido */}
       {menuOpen && (
-        <div
-          data-testid="filter-menu-popover"
-          className="absolute top-9 right-2 w-52 bg-[#16201b] border border-[#27382f] rounded-lg p-2.5 z-50 shadow-xl space-y-2 text-[11px]"
-        >
-          <div className="flex items-center space-x-1 text-[#00e676] font-semibold border-b border-[#27382f] pb-1">
-            <SlidersHorizontal size={12} />
-            <span>Rango de tempo (BPM)</span>
+        <div className="px-3 pb-3 pt-1 border-t border-[#1a231f] bg-[#121815]">
+          <div className="text-[10px] text-[#52635d] font-bold tracking-wider mb-2 mt-1">
+            ALL FILTERS
           </div>
+          
+          <div className="flex flex-col space-y-1.5 text-[11px]">
+            {/* Fila 1 */}
+            <div className="grid grid-cols-3 gap-1.5">
+              <button className="flex items-center justify-center space-x-1 bg-[#1a231f] border border-[#27382f] rounded py-1.5 text-[#7f948c] hover:text-white hover:bg-[#23302a] transition-colors">
+                <GripVertical size={12} /> <span>Draggable</span>
+              </button>
+              <button className="flex items-center justify-center space-x-1 bg-[#1a231f] border border-[#27382f] rounded py-1.5 text-[#7f948c] hover:text-white hover:bg-[#23302a] transition-colors">
+                <Equal size={12} className="rotate-90" /> <span>Similar</span>
+              </button>
+              <button className="flex items-center justify-center space-x-1 bg-[#1a231f] border border-[#27382f] rounded py-1.5 text-[#7f948c] hover:text-white hover:bg-[#23302a] transition-colors">
+                <Sparkles size={12} /> <span>Fresh</span>
+              </button>
+            </div>
 
-          <div className="flex justify-between items-center">
-            <span>Margen de BPM:</span>
-            <div className="flex space-x-1">
-              {[3, 6, 10].map((tol) => (
-                <button
-                  key={tol}
-                  type="button"
-                  onClick={() => onSetBpmTolerance(tol)}
-                  className={`px-1.5 py-0.5 rounded ${
-                    bpmTolerance === tol
-                      ? "bg-[#00e676] text-[#0d1210] font-bold"
-                      : "bg-[#1f2b25] text-white hover:bg-[#2b3a33]"
-                  }`}
-                >
-                  ±{tol}%
-                </button>
-              ))}
+            {/* Fila 2 */}
+            <div className="grid grid-cols-2 gap-1.5">
+              <button 
+                onClick={handleBpmCycle}
+                className="flex items-center justify-center space-x-1 bg-[#1a231f] border border-[#27382f] rounded py-1.5 text-[#7f948c] hover:text-white hover:bg-[#23302a] transition-colors"
+              >
+                <Activity size={12} /> <span>BPM ±{bpmTolerance}</span>
+              </button>
+              <button 
+                onClick={onToggleFilter}
+                className={`flex items-center justify-center space-x-1 rounded py-1.5 transition-colors ${
+                  filterArmonico 
+                    ? "bg-[#23302a] border border-[#405249] text-white" 
+                    : "bg-[#1a231f] border border-[#27382f] text-[#7f948c] hover:text-white"
+                }`}
+              >
+                <Music size={12} /> <span>Coincidencia armónica</span>
+              </button>
+            </div>
+
+            {/* Fila 3 */}
+            <div className="grid grid-cols-2 gap-1.5">
+              <button className="flex items-center justify-center space-x-1 bg-[#1a231f] border border-[#27382f] rounded py-1.5 text-[#7f948c] hover:text-white hover:bg-[#23302a] transition-colors">
+                <Zap size={12} /> <span>Curveball</span>
+              </button>
+              <button className="flex items-center justify-center space-x-1 bg-[#1a231f] border border-[#27382f] rounded py-1.5 text-[#7f948c] hover:text-white hover:bg-[#23302a] transition-colors">
+                <Shuffle size={12} /> <span>Aleatorizar</span>
+              </button>
+            </div>
+
+            {/* Fila 4 */}
+            <div className="grid grid-cols-2 gap-1.5">
+              <button className="flex items-center justify-center space-x-1 bg-[#1a231f] border border-[#27382f] rounded py-1.5 text-[#7f948c] hover:text-white hover:bg-[#23302a] transition-colors">
+                <Archive size={12} /> <span>Crates</span>
+              </button>
+              <button className="flex items-center justify-center space-x-1 bg-[#1a231f] border border-[#27382f] rounded py-1.5 text-[#7f948c] hover:text-white hover:bg-[#23302a] transition-colors">
+                <EyeOff size={12} /> <span>Removed tracks</span>
+              </button>
             </div>
           </div>
-
-          <label className="flex items-center justify-between cursor-pointer pt-1 border-t border-[#27382f]/60">
-            <span>Permitir Half/Double BPM:</span>
-            <button
-              type="button"
-              onClick={onToggleHalfDouble}
-              className={`w-4 h-4 rounded flex items-center justify-center border ${
-                allowHalfDouble
-                  ? "bg-[#00e676] border-[#00e676] text-black"
-                  : "border-[#405249] bg-transparent"
-              }`}
-            >
-              {allowHalfDouble && <Check size={10} strokeWidth={3} />}
-            </button>
-          </label>
         </div>
       )}
     </div>

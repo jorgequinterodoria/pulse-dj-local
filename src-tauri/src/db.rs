@@ -8,7 +8,6 @@ pub struct DatabaseManager {
 
 impl DatabaseManager {
     pub fn new_in_memory() -> Result<Self> {
-        // Cambiamos in_memory por almacenamiento persistente para guardar tu biblioteca real
         let data_dir = dirs::audio_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
         let pulse_dir = data_dir.join("PulseDJ");
         if !pulse_dir.exists() {
@@ -40,6 +39,9 @@ impl DatabaseManager {
             [],
         )?;
 
+        // Migración silenciosa: Intenta añadir la columna 'location' a bases de datos existentes
+        let _ = conn.execute("ALTER TABLE tracks ADD COLUMN location TEXT NOT NULL DEFAULT ''", []);
+
         conn.execute(
             "CREATE TABLE IF NOT EXISTS transitions (
                 track_a_id TEXT NOT NULL,
@@ -54,19 +56,20 @@ impl DatabaseManager {
         Ok(())
     }
 
-    // NUEVO: Agrega canciones reales a la base de datos local dinámicamente
     pub fn upsert_track(&self, track: &Track) -> Result<()> {
         let conn = self.conn.lock().unwrap();
+        // Si el track nuevo no trae location, conservamos el location que ya estaba en la BD
         conn.execute(
-            "INSERT INTO tracks (id, title, artist, bpm, key, energy, rating) 
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+            "INSERT INTO tracks (id, title, artist, bpm, key, energy, rating, location) 
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
              ON CONFLICT(id) DO UPDATE SET 
                 title=excluded.title, 
                 artist=excluded.artist, 
                 bpm=excluded.bpm, 
-                key=excluded.key",
+                key=excluded.key,
+                location=CASE WHEN excluded.location != '' THEN excluded.location ELSE location END",
             params![
-                track.id, track.title, track.artist, track.bpm, track.key, track.energy, track.rating
+                track.id, track.title, track.artist, track.bpm, track.key, track.energy, track.rating, track.location
             ],
         )?;
         Ok(())
@@ -74,7 +77,7 @@ impl DatabaseManager {
 
     pub fn get_compatible_tracks(&self, criteria: &FilterCriteria) -> Result<Vec<Track>> {
         let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT id, title, artist, bpm, key, energy, rating FROM tracks")?;
+        let mut stmt = conn.prepare("SELECT id, title, artist, bpm, key, energy, rating, location FROM tracks")?;
 
         let track_iter = stmt.query_map([], |row| {
             Ok(Track {
@@ -85,6 +88,7 @@ impl DatabaseManager {
                 key: row.get(4)?,
                 energy: row.get(5)?,
                 rating: row.get(6)?,
+                location: row.get(7)?, // Recuperamos la ruta
             })
         })?;
 
@@ -92,7 +96,6 @@ impl DatabaseManager {
         let mut filtered: Vec<Track> = Vec::new();
 
         for track in track_iter.flatten() {
-            // Ignoramos la misma canción que está sonando
             if track.key == criteria.key && (track.bpm - criteria.bpm).abs() < 0.1 {
                continue; 
             }
@@ -152,7 +155,6 @@ impl DatabaseManager {
             }
         });
 
-        // Solo mostramos el Top 10 para no saturar la lista visual
         filtered.truncate(10);
         Ok(filtered)
     }
@@ -160,7 +162,7 @@ impl DatabaseManager {
     pub fn get_my_style_tracks(&self, current_track_id: &str) -> Result<Vec<Track>> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = conn.prepare(
-            "SELECT t.id, t.title, t.artist, t.bpm, t.key, t.energy, t.rating
+            "SELECT t.id, t.title, t.artist, t.bpm, t.key, t.energy, t.rating, t.location
              FROM tracks t
              JOIN transitions tr ON t.id = tr.track_b_id
              WHERE tr.track_a_id = ?1
@@ -177,6 +179,7 @@ impl DatabaseManager {
                 key: row.get(4)?,
                 energy: row.get(5)?,
                 rating: row.get(6)?,
+                location: row.get(7)?,
             })
         })?;
 
