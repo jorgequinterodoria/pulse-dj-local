@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.tauri.app/config/2",
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/tooling/cli/schema.json",
   "productName": "pulse-dj-local",
   "version": "0.1.0",
   "identifier": "com.pulsedj.hud",
@@ -13,13 +13,14 @@
     "windows": [
       {
         "title": "Pulse HUD",
-        "width": 380,
-        "height": 520,
+        "width": 340,
+        "height": 580,
         "resizable": true,
+        "fullscreen": false,
         "alwaysOnTop": true,
         "decorations": false,
         "transparent": true,
-        "visible": true
+        "shadow": false
       }
     ],
     "security": {

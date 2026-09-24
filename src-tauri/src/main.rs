@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    pulse_dj_local_lib::run()
+    pulse_dj_local_lib::run();
 }
