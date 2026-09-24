@@ -1,155 +1,102 @@
+use notify::{Config, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use std::fs;
+use std::path::PathBuf;
+use std::sync::{Arc, mpsc::channel, Mutex};
+use std::time::Duration;
+use tauri::{AppHandle, Emitter};
+
+use crate::db::DatabaseManager;
 use crate::models::Track;
-use std::sync::Mutex;
 
 pub struct DjWatcherState {
+    pub last_processed_id: Mutex<String>,
     pub current_track: Mutex<Option<Track>>,
 }
 
 impl DjWatcherState {
+    // Restaurado el método new() que lib.rs estaba buscando
     pub fn new() -> Self {
         Self {
-            current_track: Mutex::new(Some(Track {
-                id: "initial_demo_1".to_string(),
-                title: "Shine On".to_string(),
-                artist: "R.I.O".to_string(),
-                bpm: 128.0,
-                key: "8A".to_string(),
-                energy: 7,
-                rating: Some(4),
-            })),
-        }
-    }
-
-    pub fn set_track(&self, track: Track) {
-        if let Ok(mut lock) = self.current_track.lock() {
-            *lock = Some(track);
+            last_processed_id: Mutex::new(String::new()),
+            current_track: Mutex::new(None),
         }
     }
 
     pub fn get_track(&self) -> Option<Track> {
-        if let Ok(lock) = self.current_track.lock() {
-            lock.clone()
-        } else {
-            None
+        self.current_track.lock().unwrap().clone()
+    }
+
+    pub fn set_track(&self, track: Track) {
+        *self.current_track.lock().unwrap() = Some(track);
+    }
+}
+
+// Restaurada la firma original que acepta 3 argumentos
+pub fn start_fs_watcher(
+    app_handle: AppHandle,
+    state: Arc<DjWatcherState>,
+    db: Arc<DatabaseManager>,
+) {
+    std::thread::spawn(move || {
+        let (tx, rx) = channel();
+
+        let mut watcher = RecommendedWatcher::new(
+            tx,
+            Config::default().with_poll_interval(Duration::from_millis(300)),
+        )
+        .unwrap();
+
+        let target_dir = dirs::audio_dir()
+            .unwrap_or_else(|| PathBuf::from("."))
+            .join("PulseDJ");
+            
+        let target_file = target_dir.join("now_playing.json");
+
+        if !target_dir.exists() {
+            let _ = fs::create_dir_all(&target_dir);
         }
-    }
-}
+        
+        if !target_file.exists() {
+            let _ = fs::write(&target_file, "{}");
+        }
 
-pub fn get_mock_recommendations() -> Vec<Track> {
-    vec![
-        Track {
-            id: "rec_1".to_string(),
-            title: "Pepas".to_string(),
-            artist: "Farruko".to_string(),
-            bpm: 121.0,
-            key: "1B".to_string(),
-            energy: 9,
-            rating: Some(5),
-        },
-        Track {
-            id: "rec_2".to_string(),
-            title: "Rise Up".to_string(),
-            artist: "Yves Larock".to_string(),
-            bpm: 128.0,
-            key: "9A".to_string(),
-            energy: 6,
-            rating: Some(4),
-        },
-        Track {
-            id: "rec_3".to_string(),
-            title: "Moves Like Jagger".to_string(),
-            artist: "Maroon 5".to_string(),
-            bpm: 128.0,
-            key: "10A".to_string(),
-            energy: 7,
-            rating: Some(4),
-        },
-        Track {
-            id: "rec_4".to_string(),
-            title: "Give Me Everything".to_string(),
-            artist: "Pitbull".to_string(),
-            bpm: 129.0,
-            key: "4A".to_string(),
-            energy: 8,
-            rating: Some(5),
-        },
-        Track {
-            id: "rec_5".to_string(),
-            title: "Pump Up The Jam".to_string(),
-            artist: "Technotronic".to_string(),
-            bpm: 125.0,
-            key: "8A".to_string(),
-            energy: 8,
-            rating: Some(4),
-        },
-        Track {
-            id: "rec_6".to_string(),
-            title: "I'm Good (Blue)".to_string(),
-            artist: "David Guetta & Bebe Rexha".to_string(),
-            bpm: 128.0,
-            key: "7A".to_string(),
-            energy: 9,
-            rating: Some(5),
-        },
-        Track {
-            id: "rec_7".to_string(),
-            title: "I Love It".to_string(),
-            artist: "Icona Pop".to_string(),
-            bpm: 126.0,
-            key: "8B".to_string(),
-            energy: 8,
-            rating: Some(4),
-        },
-        Track {
-            id: "rec_8".to_string(),
-            title: "Limbo".to_string(),
-            artist: "Daddy Yankee".to_string(),
-            bpm: 125.0,
-            key: "9B".to_string(),
-            energy: 8,
-            rating: Some(4),
-        },
-        Track {
-            id: "rec_9".to_string(),
-            title: "Love Tonight".to_string(),
-            artist: "Shouse".to_string(),
-            bpm: 123.0,
-            key: "8A".to_string(),
-            energy: 7,
-            rating: Some(5),
-        },
-    ]
-}
+        watcher
+            .watch(&target_dir, RecursiveMode::NonRecursive)
+            .unwrap();
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+        println!("👀 Monitoreando pistas en: {:?}", target_file);
 
-    #[test]
-    fn test_watcher_state_flow() {
-        let state = DjWatcherState::new();
-        let track = state.get_track().expect("Debe existir una pista inicial");
-        assert_eq!(track.title, "Shine On");
-        assert_eq!(track.artist, "R.I.O");
+        for res in rx {
+            match res {
+                Ok(event) => {
+                    if let EventKind::Modify(_) = event.kind {
+                        
+                        if let Ok(content) = fs::read_to_string(&target_file) {
+                            if let Ok(new_track) = serde_json::from_str::<Track>(&content) {
+                                
+                                let mut last_id = state.last_processed_id.lock().unwrap();
+                                
+                                if *last_id != new_track.id {
+                                    
+                                    // Guardar en la base de datos
+                                    let _ = db.upsert_track(&new_track);
+                                    
+                                    if let Some(prev_track) = state.get_track() {
+                                        let _ = db.record_transition(&prev_track.id, &new_track.id);
+                                    }
 
-        state.set_track(Track {
-            id: "test_2".to_string(),
-            title: "Titanium".to_string(),
-            artist: "David Guetta".to_string(),
-            bpm: 126.0,
-            key: "11A".to_string(),
-            energy: 8,
-            rating: Some(5),
-        });
+                                    *last_id = new_track.id.clone();
+                                    state.set_track(new_track.clone());
 
-        let updated = state.get_track().expect("Debe actualizar el track");
-        assert_eq!(updated.title, "Titanium");
-    }
-
-    #[test]
-    fn test_mock_recommendations_count() {
-        let recs = get_mock_recommendations();
-        assert!(!recs.is_empty());
-        assert_eq!(recs[0].title, "Pepas");
-    }
+                                    // Emitir el evento a React
+                                    let _ = app_handle.emit("track-changed", new_track);
+                                }
+                            }
+                        }
+                    }
+                }
+                Err(e) => println!("❌ Error en el File System Watcher: {:?}", e),
+            }
+        }
+    });
 }

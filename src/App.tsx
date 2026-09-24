@@ -7,7 +7,14 @@ import { TrackCard } from "./components/TrackCard";
 import { CollapsedWidget } from "./components/CollapsedWidget";
 
 export const App: React.FC = () => {
-  const { state, toggleCollapse, setMode, toggleFilter } = useDjHud();
+  const {
+    state,
+    toggleCollapse,
+    setMode,
+    toggleFilter,
+    setBpmTolerance,
+    toggleHalfDouble,
+  } = useDjHud();
 
   if (state.isCollapsed) {
     return (
@@ -18,7 +25,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div className="w-[340px] h-[580px] flex flex-col bg-[#0f1412]/95 border border-[#1b2621] rounded-2xl shadow-2xl backdrop-blur-xl overflow-hidden font-sans">
+    <div className="w-[340px] h-[580px] flex flex-col bg-[#0f1412] border border-[#1b2621] rounded-2xl shadow-2xl overflow-hidden font-sans">
       {/* Cabecera con controles y canción en reproducción */}
       <HudHeader currentTrack={state.currentTrack} onCollapse={toggleCollapse} />
 
@@ -30,10 +37,14 @@ export const App: React.FC = () => {
         onCenterIconClick={toggleCollapse}
       />
 
-      {/* Barra de utilidades y filtro armónico */}
+      {/* Barra de utilidades, menú de tempo y filtro armónico */}
       <FilterBar
         filterArmonico={state.filterArmonico}
+        bpmTolerance={state.bpmTolerance}
+        allowHalfDouble={state.allowHalfDouble}
         onToggleFilter={toggleFilter}
+        onSetBpmTolerance={setBpmTolerance}
+        onToggleHalfDouble={toggleHalfDouble}
       />
 
       {/* Lista de temas recomendados compatibles */}
