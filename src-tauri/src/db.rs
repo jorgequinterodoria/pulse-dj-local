@@ -1,6 +1,6 @@
+use crate::models::Track;
 use rusqlite::{params, params_from_iter, Connection, Result};
 use std::sync::Mutex;
-use crate::models::Track;
 
 pub struct DatabaseManager {
     pub conn: Mutex<Connection>,
@@ -9,7 +9,7 @@ pub struct DatabaseManager {
 impl DatabaseManager {
     pub fn new_in_memory() -> Result<Self> {
         let conn = Connection::open_in_memory()?;
-        
+
         conn.execute(
             "CREATE TABLE IF NOT EXISTS tracks (
                 id TEXT PRIMARY KEY,
@@ -83,16 +83,20 @@ impl DatabaseManager {
         let mut query = String::from(
             "SELECT id, title, artist, bpm, key, energy, rating, location FROM tracks WHERE bpm >= ? AND bpm <= ?"
         );
-        
+
         // Inyección dinámica de Array para la Rueda de Camelot
         if !allowed_keys.is_empty() {
-            let placeholders = allowed_keys.iter().map(|_| "?").collect::<Vec<_>>().join(", ");
+            let placeholders = allowed_keys
+                .iter()
+                .map(|_| "?")
+                .collect::<Vec<_>>()
+                .join(", ");
             query.push_str(&format!(" AND key IN ({})", placeholders));
         }
-        
+
         // Lógica de ordenamiento
         if fresh {
-            query.push_str(" ORDER BY id DESC LIMIT 50"); 
+            query.push_str(" ORDER BY id DESC LIMIT 50");
         } else if randomize {
             query.push_str(" ORDER BY RANDOM() LIMIT 50");
         } else {
@@ -100,7 +104,7 @@ impl DatabaseManager {
         }
 
         let mut stmt = conn.prepare(&query)?;
-        
+
         // Mapeo seguro de variables SQL
         let mut sql_params: Vec<rusqlite::types::Value> = vec![min_bpm.into(), max_bpm.into()];
         for k in allowed_keys {
@@ -124,7 +128,7 @@ impl DatabaseManager {
         for t in track_iter {
             tracks.push(t?);
         }
-        
+
         Ok(tracks)
     }
 }

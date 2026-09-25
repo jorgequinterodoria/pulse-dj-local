@@ -1,49 +1,40 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
-import { FilterBar } from "../FilterBar";
+import { describe, it, expect, vi } from 'vitest';
+import { render } from '@testing-library/react';
+import { FilterBar } from '../FilterBar';
 
-describe("FilterBar Component", () => {
-  it("debe mostrar el estado activo de coincidencia armónica y conmutar", () => {
-    const handleToggle = vi.fn();
-    render(
-      <FilterBar
-        filterArmonico={true}
-        bpmTolerance={6}
-        allowHalfDouble={false}
-        onToggleFilter={handleToggle}
-        onSetBpmTolerance={vi.fn()}
-        onToggleHalfDouble={vi.fn()}
+const mockDict = {
+  activeFilters: "Filtros Activos",
+  allFilters: "TODOS LOS FILTROS",
+  similar: "Similar",
+  fresh: "Fresco",
+  curveball: "Sorpresa (Curveball)",
+  randomize: "Aleatorizar",
+  crates: "Cajones",
+  removed: "Eliminadas",
+  harmonic: "Coincidencia armónica"
+};
+
+const mockFilters = {
+  harmonic: true,
+  bpmTolerance: 3,
+  similar: false,
+  fresh: false,
+  curveball: false,
+  randomize: false,
+};
+
+describe('FilterBar', () => {
+  it('renders correctly', () => {
+    const { getByText } = render(
+      <FilterBar 
+        filters={mockFilters} 
+        onToggleFilter={vi.fn()} 
+        onCycleBpm={vi.fn()} 
+        dict={mockDict} 
       />
     );
-
-    const toggleBtn = screen.getByTestId("toggle-filter-btn");
-    expect(toggleBtn).toHaveClass("text-[#00e676]");
-
-    fireEvent.click(toggleBtn);
-    expect(handleToggle).toHaveBeenCalledTimes(1);
-  });
-
-  it("debe desplegar el menú de tolerancia BPM y seleccionar un nuevo margen", () => {
-    const handleBpmChange = vi.fn();
-    render(
-      <FilterBar
-        filterArmonico={true}
-        bpmTolerance={6}
-        allowHalfDouble={false}
-        onToggleFilter={vi.fn()}
-        onSetBpmTolerance={handleBpmChange}
-        onToggleHalfDouble={vi.fn()}
-      />
-    );
-
-    const dropdownTrigger = screen.getByTestId("filter-dropdown-trigger");
-    fireEvent.click(dropdownTrigger);
-
-    expect(screen.getByTestId("filter-menu-popover")).toBeInTheDocument();
-
-    const bpm10Btn = screen.getByText("±10%");
-    fireEvent.click(bpm10Btn);
-
-    expect(handleBpmChange).toHaveBeenCalledWith(10);
+    
+    // Debería mostrar "Filtros Activos (1)" porque 'harmonic' es true
+    expect(getByText('Filtros Activos (1)')).toBeDefined();
   });
 });

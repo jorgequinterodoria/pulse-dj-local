@@ -14,12 +14,12 @@ pub struct Track {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HarmonicRelation {
-    Exact,         // 8A -> 8A
-    RelativeMode,  // 8A -> 8B
-    EnergyDown,    // 8A -> 7A
-    EnergyUp,      // 8A -> 9A
-    EnergyBoost2,  // 8A -> 10A (+2 semitonos / Modulación de subida)
-    EnergyBoost7,  // 8A -> 3A (+1 semitono / Modulación de clímax)
+    Exact,        // 8A -> 8A
+    RelativeMode, // 8A -> 8B
+    EnergyDown,   // 8A -> 7A
+    EnergyUp,     // 8A -> 9A
+    EnergyBoost2, // 8A -> 10A (+2 semitonos / Modulación de subida)
+    EnergyBoost7, // 8A -> 3A (+1 semitono / Modulación de clímax)
     Incompatible,
 }
 
@@ -114,13 +114,34 @@ mod tests {
     fn test_camelot_relations() {
         let current = CamelotKey::parse("8A").unwrap();
 
-        assert_eq!(current.relation_with(&CamelotKey::parse("8A").unwrap()), HarmonicRelation::Exact);
-        assert_eq!(current.relation_with(&CamelotKey::parse("8B").unwrap()), HarmonicRelation::RelativeMode);
-        assert_eq!(current.relation_with(&CamelotKey::parse("9A").unwrap()), HarmonicRelation::EnergyUp);
-        assert_eq!(current.relation_with(&CamelotKey::parse("7A").unwrap()), HarmonicRelation::EnergyDown);
-        assert_eq!(current.relation_with(&CamelotKey::parse("10A").unwrap()), HarmonicRelation::EnergyBoost2);
-        assert_eq!(current.relation_with(&CamelotKey::parse("3A").unwrap()), HarmonicRelation::EnergyBoost7);
-        assert_eq!(current.relation_with(&CamelotKey::parse("1B").unwrap()), HarmonicRelation::Incompatible);
+        assert_eq!(
+            current.relation_with(&CamelotKey::parse("8A").unwrap()),
+            HarmonicRelation::Exact
+        );
+        assert_eq!(
+            current.relation_with(&CamelotKey::parse("8B").unwrap()),
+            HarmonicRelation::RelativeMode
+        );
+        assert_eq!(
+            current.relation_with(&CamelotKey::parse("9A").unwrap()),
+            HarmonicRelation::EnergyUp
+        );
+        assert_eq!(
+            current.relation_with(&CamelotKey::parse("7A").unwrap()),
+            HarmonicRelation::EnergyDown
+        );
+        assert_eq!(
+            current.relation_with(&CamelotKey::parse("10A").unwrap()),
+            HarmonicRelation::EnergyBoost2
+        );
+        assert_eq!(
+            current.relation_with(&CamelotKey::parse("3A").unwrap()),
+            HarmonicRelation::EnergyBoost7
+        );
+        assert_eq!(
+            current.relation_with(&CamelotKey::parse("1B").unwrap()),
+            HarmonicRelation::Incompatible
+        );
     }
 
     #[test]
@@ -131,6 +152,9 @@ mod tests {
 
         assert_eq!(key_12a.relation_with(&key_1a), HarmonicRelation::EnergyUp);
         assert_eq!(key_1a.relation_with(&key_12a), HarmonicRelation::EnergyDown);
-        assert_eq!(key_12a.relation_with(&key_11a), HarmonicRelation::EnergyDown);
+        assert_eq!(
+            key_12a.relation_with(&key_11a),
+            HarmonicRelation::EnergyDown
+        );
     }
 }

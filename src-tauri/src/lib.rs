@@ -9,10 +9,6 @@ use crate::db::DatabaseManager;
 use crate::models::Track;
 use crate::watcher::{start_fs_watcher, DjWatcherState};
 
-// ==========================================
-// COMANDOS DE TAURI (Puente React -> Rust)
-// ==========================================
-
 #[tauri::command]
 fn get_filtered_tracks(
     min_bpm: f64,
@@ -26,9 +22,29 @@ fn get_filtered_tracks(
         .map_err(|e| e.to_string())
 }
 
-// ==========================================
-// PUNTO DE ENTRADA PRINCIPAL
-// ==========================================
+#[tauri::command]
+fn open_settings_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("settings") {
+        let _ = window.show();
+        let _ = window.set_focus();
+        return Ok(());
+    }
+
+    tauri::WebviewWindowBuilder::new(
+        &app,
+        "settings",
+        tauri::WebviewUrl::App(Default::default())
+    )
+    .title("Pulse DJ Settings")
+    .inner_size(1000.0, 750.0) // <-- TAMAÑO AUMENTADO
+    .min_inner_size(850.0, 600.0)
+    .center()
+    .decorations(true)
+    .build()
+    .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -40,8 +56,12 @@ pub fn run() {
     let watcher_state = Arc::new(DjWatcherState::new());
 
     tauri::Builder::default()
-        // Inyectamos el comando aquí
-        .invoke_handler(tauri::generate_handler![get_filtered_tracks])
+        // Inicializamos el plugin de diálogos para las carpetas
+        .plugin(tauri_plugin_dialog::init())
+        .invoke_handler(tauri::generate_handler![
+            get_filtered_tracks,
+            open_settings_window
+        ])
         .setup(move |app| {
             let handle = app.handle().clone();
             
