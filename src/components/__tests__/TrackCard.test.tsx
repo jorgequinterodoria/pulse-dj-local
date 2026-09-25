@@ -11,6 +11,7 @@ describe("TrackCard Component", () => {
     bpm: 121,
     key: "1B",
     energy: 9,
+    rating: 5,
   };
 
   it("debe mostrar correctamente el título, artista, tono Camelot y BPM", () => {

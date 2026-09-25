@@ -50,7 +50,7 @@ export const App: React.FC = () => {
       {/* Lista de temas recomendados compatibles */}
       <div className="flex-1 overflow-y-auto px-1.5 py-1 space-y-0.5">
         {state.recommendations.map((track, idx) => (
-          <TrackCard key={track.id} track={track} isFirst={idx === 0} />
+          <TrackCard key={track.id} track={track} index={idx} />
         ))}
       </div>
     </div>

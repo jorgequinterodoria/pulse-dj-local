@@ -49,9 +49,6 @@ export const HudHeader: React.FC<HudHeaderProps> = ({ currentTrack, onCollapse }
 
         {/* Acciones del HUD */}
         <div className="flex items-center space-x-2 text-[#7f948c]" onPointerDown={(e) => e.stopPropagation()}>
-          <span className="text-[11px] font-bold bg-[#1d2723] px-1.5 py-0.5 rounded text-[#00e676]">
-            10
-          </span>
           <button onClick={onCollapse} className="hover:text-white transition-colors" title="Colapsar widget">
             <Minimize2 size={14} />
           </button>

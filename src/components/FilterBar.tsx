@@ -1,7 +1,5 @@
 import React, { useState } from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import { 
-  GripVertical, 
   Music, 
   ChevronUp, 
   Zap, 
@@ -30,13 +28,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const startDrag = () => {
-    try {
-      getCurrentWindow().startDragging();
-    } catch {}
-  };
-
-  // Cicla los rangos de BPM al hacer clic
   const handleBpmCycle = () => {
     if (bpmTolerance === 3) onSetBpmTolerance(6);
     else if (bpmTolerance === 6) onSetBpmTolerance(10);
@@ -45,18 +36,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
   return (
     <div className="relative flex flex-col bg-[#121815] border-y border-[#1a231f] text-[12px] text-[#7f948c]">
-      <div className="flex items-center justify-between px-3 py-2">
-        
-        {/* API nativa de arrastre para la zona central */}
-        <div
-          onPointerDown={startDrag}
-          className="flex items-center space-x-1 cursor-grab active:cursor-grabbing hover:text-white"
-        >
-          <GripVertical size={13} />
-          <span>Draggable</span>
-        </div>
-
-        {/* Botón activo estilo pastilla azul */}
+      <div className="flex items-center justify-end px-3 py-2">
         <button
           type="button"
           onClick={() => setMenuOpen(!menuOpen)}
@@ -68,7 +48,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         </button>
       </div>
 
-      {/* Menú ALL FILTERS expandido */}
       {menuOpen && (
         <div className="px-3 pb-3 pt-1 border-t border-[#1a231f] bg-[#121815]">
           <div className="text-[10px] text-[#52635d] font-bold tracking-wider mb-2 mt-1">
@@ -76,11 +55,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           </div>
           
           <div className="flex flex-col space-y-1.5 text-[11px]">
-            {/* Fila 1 */}
-            <div className="grid grid-cols-3 gap-1.5">
-              <button className="flex items-center justify-center space-x-1 bg-[#1a231f] border border-[#27382f] rounded py-1.5 text-[#7f948c] hover:text-white hover:bg-[#23302a] transition-colors">
-                <GripVertical size={12} /> <span>Draggable</span>
-              </button>
+            <div className="grid grid-cols-2 gap-1.5">
               <button className="flex items-center justify-center space-x-1 bg-[#1a231f] border border-[#27382f] rounded py-1.5 text-[#7f948c] hover:text-white hover:bg-[#23302a] transition-colors">
                 <Equal size={12} className="rotate-90" /> <span>Similar</span>
               </button>
@@ -89,7 +64,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               </button>
             </div>
 
-            {/* Fila 2 */}
             <div className="grid grid-cols-2 gap-1.5">
               <button 
                 onClick={handleBpmCycle}
@@ -109,7 +83,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               </button>
             </div>
 
-            {/* Fila 3 */}
             <div className="grid grid-cols-2 gap-1.5">
               <button className="flex items-center justify-center space-x-1 bg-[#1a231f] border border-[#27382f] rounded py-1.5 text-[#7f948c] hover:text-white hover:bg-[#23302a] transition-colors">
                 <Zap size={12} /> <span>Curveball</span>
@@ -119,7 +92,6 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               </button>
             </div>
 
-            {/* Fila 4 */}
             <div className="grid grid-cols-2 gap-1.5">
               <button className="flex items-center justify-center space-x-1 bg-[#1a231f] border border-[#27382f] rounded py-1.5 text-[#7f948c] hover:text-white hover:bg-[#23302a] transition-colors">
                 <Archive size={12} /> <span>Crates</span>
