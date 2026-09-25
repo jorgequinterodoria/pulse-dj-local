@@ -6,7 +6,16 @@ export interface Track {
   key: string;
   energy: number;
   rating: number;
-  location?: string; // NUEVO: Ruta física del archivo
+  location?: string;
+}
+
+export interface FilterState {
+  harmonic: boolean;
+  bpmTolerance: number;
+  similar: boolean;
+  fresh: boolean;
+  curveball: boolean;
+  randomize: boolean;
 }
 
 export type DjMode = "MyStyle" | "PulseDJ";
